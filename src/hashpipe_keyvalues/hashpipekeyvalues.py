@@ -115,6 +115,45 @@ def _add_property(
             )
     )
 
+
+def _gather_antenna_names(hpkv, separator:str = ','):
+    # manage limited entry length
+    nants = hpkv.nof_antenna or 1
+
+    antname_list = []
+    key_enum = 0
+
+    while len(antname_list) < nants:
+        antnames = hpkv.get(f"ANTNMS{key_enum:02d}")
+        key_enum += 1
+        antname_list += antnames.split(separator)
+
+    return antname_list
+
+
+def _generate_antenna_names(ant_names:list, separator:str = ','):
+    # manage limited entry length
+    if len(ant_names) == 0:
+        return [], []
+
+    antname_dict = {}
+    key_enum = 0
+    current_str = ant_names[0]
+
+    for ant in ant_names[1:]:
+        addition = f"{separator}{ant}"
+        if len(addition) + len(current_str) > 68:
+            antname_dict[f"ANTNMS{key_enum:02d}"] = current_str
+            key_enum += 1
+            current_str = ant
+        else:
+            current_str += addition
+
+    if len(current_str) > 0:
+        antname_dict[f"ANTNMS{key_enum:02d}"] = current_str
+    return antname_dict.keys(), antname_dict.values()
+
+
 STANDARD_KEYS = {
 	"blocksize": ("BLOCSIZE", None, False, None),
 
@@ -160,6 +199,12 @@ STANDARD_KEYS = {
 	"stt_mjd_seconds": ("STT_SMJD", None, None, None),
 
 	"observation_id": ("OBSID", None, None, None),
+
+    "antenna_names": (None,
+        lambda self: _gather_antenna_names(self),
+        lambda self, value: self.set(*_generate_antenna_names(self, value)),
+        None
+    ),
 }
 
 for attribute, key in STANDARD_KEYS.items():
