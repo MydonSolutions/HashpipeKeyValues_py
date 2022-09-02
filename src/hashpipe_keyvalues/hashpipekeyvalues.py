@@ -1,10 +1,5 @@
 from string import Template
 
-REDISGETGW = Template("hashpipe://${host}/${inst}/status")
-REDISGETGW_re = r"hashpipe://(?P<host>[^/]+)/(?P<inst>[^/]+)/status"
-REDISSETGW = Template("hashpipe://${host}/${inst}/set")
-REDISSETGW_re = r"hashpipe://(?P<host>[^/]+)/(?P<inst>[^/]+)/set"
-REDISSET = "hashpipe:///set"
 
 class HashpipeKeyValues(object):
     """
@@ -12,14 +7,19 @@ class HashpipeKeyValues(object):
     standard key-values in Hashpipe"s status-buffer.
     """
 
+    GETGW = Template("hashpipe://${host}/${inst}/status")
+    SETGW = Template("hashpipe://${host}/${inst}/set")
+    GETGW_re = r"hashpipe://(?P<host>[^/]+)/(?P<inst>[^/]+)/status"
+    SETGW_re = r"hashpipe://(?P<host>[^/]+)/(?P<inst>[^/]+)/set"
+    BROADCASTGW = "hashpipe:///set"
+
     def __init__(self, hostname, instance_id, redis_obj):
         self.hostname = hostname
         self.instance_id = instance_id
         self.redis_obj = redis_obj
 
-        self.redis_getchan = REDISGETGW.substitute(host=hostname, inst=instance_id)
-        self.redis_setchan = REDISSETGW.substitute(host=hostname, inst=instance_id)
-
+        self.redis_getchan = self.GETGW.substitute(host=hostname, inst=instance_id)
+        self.redis_setchan = self.SETGW.substitute(host=hostname, inst=instance_id)
 
     @staticmethod
     def _decode_value(value):
