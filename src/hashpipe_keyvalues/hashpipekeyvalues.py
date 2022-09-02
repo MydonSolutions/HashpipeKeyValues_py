@@ -87,15 +87,15 @@ def _add_property(
 STANDARD_KEYS = {
 	"blocksize": ("BLOCSIZE", None, False, None),
 
-    "n_pols": ("NPOL", None, None, None),
-    "n_bits": ("NBITS", None, None, None),
-    "n_beams": ("NBEAMS", None, None, None),
-    "n_antennas": ("NANTS", None, None, None),
-    "n_chans": ("NCHAN", None, None, None),
+    "nof_pols": ("NPOL", None, None, None),
+    "nof_bits": ("NBITS", None, None, None),
+    "nof_beams": ("NBEAM", None, None, None),
+    "nof_antennas": ("NANTS", None, None, None),
+    "nof_channels": ("NCHAN", None, None, None),
     
-	"obs_nchans": ("OBSNCHAN", None, None, None),
-	"obs_frequecy": ("OBSFREQ", None, None, None),
-	"obs_bandwidth": ("OBSBW", None, None, None),
+	"observation_nof_channels": ("OBSNCHAN", None, None, None),
+	"observation_frequecy": ("OBSFREQ", None, None, None),
+	"observation_bandwidth": ("OBSBW", None, None, None),
 	"channel_bandwidth": ("CHAN_BW",
         None,
         lambda self, value: self.set(["CHAN_BW", "TBIN"], [value, 1.0/value]),
