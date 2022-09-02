@@ -15,13 +15,18 @@ class HashpipeKeyValues(object):
     SETGW_re = r"hashpipe://(?P<host>[^/]+)/(?P<inst>[^/]+)/set"
     BROADCASTGW = "hashpipe:///set"
 
-    def __init__(self, hostname, instance_id, redis_obj):
+    def __init__(self, hostname, instance_id, redis_obj, propertytuple_dict=None):
         self.hostname = hostname
         self.instance_id = instance_id
         self.redis_obj = redis_obj
 
         self.redis_getchan = self.GETGW.substitute(host=hostname, inst=instance_id)
         self.redis_setchan = self.SETGW.substitute(host=hostname, inst=instance_id)
+
+        if propertytuple_dict is not None:
+            for property_name, propertytuple in propertytuple_dict.items():
+                HashpipeKeyValues.add_property(self, property_name, *propertytuple)
+
 
     def __str__(self):
         return f"{self.hostname}.{self.instance_id}"
@@ -36,7 +41,8 @@ class HashpipeKeyValues(object):
         ipaddress:str,
         redis_obj,
         hostname_regex: str = r"(?P<hostname>.+)-\d+g-(?P<instance_id>.+)",
-        dns = None
+        dns = None,
+        propertytuple_dict=None
     ):
         if dns is not None and ipaddress in dns:
             hostname = dns[ipaddress]
@@ -45,7 +51,7 @@ class HashpipeKeyValues(object):
 
         m = re.match(hostname_regex, hostname)
         assert m is not None, f"'{hostname}' does not match r`{hostname_regex}`"
-        return HashpipeKeyValues(m.group(1), m.group(2), redis_obj)
+        return HashpipeKeyValues(m.group(1), m.group(2), redis_obj, propertytuple_dict)
 
     @staticmethod
     def broadcast(redis_obj, keys: str or list, values):
@@ -87,33 +93,34 @@ class HashpipeKeyValues(object):
             message = '\n'.join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
         return self.redis_obj.publish(self.redis_setchan, message), message
 
-def _add_property(
-    class_,
-    property_name,
-    property_key,
-    getter=None,
-    setter=None,
-    doc=None,
-):
-    if getter is None:
-        assert property_key is not None, f"Cannot use default getter without a key for {property_name}"
-        getter = lambda self: self.get(property_key)
-    if setter is None:
-        assert property_key is not None, f"Cannot use default setter without a key for {property_name}"
-        setter = lambda self, value: self.set(property_key, value)
-    elif setter is False:
-        setter = None
+    @staticmethod
+    def add_property(
+        recipient,
+        property_name,
+        property_key,
+        getter=None,
+        setter=None,
+        doc=None,
+    ):
+        if getter is None:
+            assert property_key is not None, f"Cannot use default getter without a key for {property_name}"
+            getter = lambda self: self.get(property_key)
+        if setter is None:
+            assert property_key is not None, f"Cannot use default setter without a key for {property_name}"
+            setter = lambda self, value: self.set(property_key, value)
+        elif setter is False:
+            setter = None
 
-    setattr(
-            class_,
-            property_name,
-            property(
-                    fget=getter,
-                    fset=setter,
-                    fdel=None,
-                    doc=doc,
-            )
-    )
+        setattr(
+                recipient,
+                property_name,
+                property(
+                        fget=getter,
+                        fset=setter,
+                        fdel=None,
+                        doc=doc,
+                )
+        )
 
 
 def _gather_antenna_names(hpkv, separator:str = ','):
@@ -208,4 +215,4 @@ STANDARD_KEYS = {
 }
 
 for attribute, key in STANDARD_KEYS.items():
-    _add_property(HashpipeKeyValues, attribute, *key)
+    HashpipeKeyValues.add_property(HashpipeKeyValues, attribute, *key)
