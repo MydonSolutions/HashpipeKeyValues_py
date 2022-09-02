@@ -1,4 +1,6 @@
 from string import Template
+import socket
+import re
 
 
 class HashpipeKeyValues(object):
@@ -21,8 +23,29 @@ class HashpipeKeyValues(object):
         self.redis_getchan = self.GETGW.substitute(host=hostname, inst=instance_id)
         self.redis_setchan = self.SETGW.substitute(host=hostname, inst=instance_id)
 
+    def __str__(self):
+        return f"{self.hostname}.{self.instance_id}"
+
+
     def __hash__(self):
-        return hash(f"{self.hostname}.{self.instance_id}")
+        return hash(str(self))
+
+
+    @staticmethod
+    def instance_at(
+        ipaddress:str,
+        redis_obj,
+        hostname_regex: str = r"(?P<hostname>.+)-\d+-(?P<instance_id>.+)",
+        dns = None
+    ):
+        if dns is not None and ipaddress in dns:
+            hostname = dns[ipaddress]
+        else:
+            hostname = socket.gethostbyaddr(ipaddress)[0]
+
+        m = re.match(hostname_regex, hostname)
+        assert m is not None, f"'{hostname}' does not match r`{hostname_regex}`"
+        return HashpipeKeyValues(m.group(1), m.group(2), redis_obj)
 
     @staticmethod
     def _decode_value(value):
