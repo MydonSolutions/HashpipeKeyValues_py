@@ -6,40 +6,6 @@ REDISSETGW = Template("hashpipe://${host}/${inst}/set")
 REDISSETGW_re = r"hashpipe://(?P<host>[^/]+)/(?P<inst>[^/]+)/set"
 REDISSET = "hashpipe:///set"
 
-STANDARD_KEYS = {
-	"blocksize": "BLOCSIZE",
-
-    "n_pols": "NPOL",
-    "n_bits": "NBITS",
-    "n_beams": "NBEAMS",
-    "n_antennas": "NANTS",
-    "n_chans": "NCHAN",
-    
-	"obs_nchans": "OBSNCHAN",
-	"obs_frequecy": "OBSFREQ",
-	"obs_bandwidth": "OBSBW",
-	"channel_bandwidth": "CHAN_BW",
-
-	"source": "SRC_NAME",
-	"telescope": "TELESCOP",
-	"data_directory": "DATADIR",
-	"project_id": "PROJID",
-	"backend": "BACKEND",
-	"observation_stem": "OBSSTEM",
-
-	"bintime": "TBIN",
-	"directio": "DIRECTIO",
-	"packet_index": "PKTIDX",
-	"beam_id": "BEAM_ID",
-	"sample_datatype": "DATATYPE",
-	"rightascension_string": "RA_STR",
-	"declination_string": "DEC_STR",
-	"stt_mjd_day": "STT_IMJD",
-	"stt_mjd_seconds": "STT_SMJD",
-
-	"observation_id": "OBSID",
-}
-
 class HashpipeKeyValues(object):
     """
     This class aims to encapsulate the logic related to accessing 
@@ -77,9 +43,13 @@ def _add_property(
     doc=None,
 ):
     if getter is None:
+        assert property_key is not None, f"Cannot use default getter without a key for {property_name}"
         getter = lambda self: self.get(property_key)
     if setter is None:
+        assert property_key is not None, f"Cannot use default setter without a key for {property_name}"
         setter = lambda self, value: self.set(property_key, value)
+    elif setter is False:
+        setter = None
 
     setattr(
             class_,
@@ -92,12 +62,44 @@ def _add_property(
             )
     )
 
-for attribute, key in STANDARD_KEYS.items():
-    _add_property(HashpipeKeyValues, attribute, key)
+STANDARD_KEYS = {
+	"blocksize": ("BLOCSIZE", None, False, None),
 
-_add_property(
-    HashpipeKeyValues,
-    "observation_stempath",
-    None,
-    getter = lambda self: [self.data_directory, self.project_id, self.backend, self.observation_stem]
-)
+    "n_pols": ("NPOL", None, None, None),
+    "n_bits": ("NBITS", None, None, None),
+    "n_beams": ("NBEAMS", None, None, None),
+    "n_antennas": ("NANTS", None, None, None),
+    "n_chans": ("NCHAN", None, None, None),
+    
+	"obs_nchans": ("OBSNCHAN", None, None, None),
+	"obs_frequecy": ("OBSFREQ", None, None, None),
+	"obs_bandwidth": ("OBSBW", None, None, None),
+	"channel_bandwidth": ("CHAN_BW", None, None, None),
+
+	"source": ("SRC_NAME", None, None, None),
+	"telescope": ("TELESCOP", None, None, None),
+	"data_directory": ("DATADIR", None, False, None),
+	"project_id": ("PROJID", None, None, None),
+	"backend": ("BACKEND", None, None, None),
+	"observation_stem": ("OBSSTEM", None, None, None),
+	"observation_stempath": (None,
+        lambda self: [self.data_directory, self.project_id, self.backend, self.observation_stem],
+        False,
+        None
+    ),
+
+	"bintime": ("TBIN", None, None, None),
+	"directio": ("DIRECTIO", None, None, None),
+	"packet_index": ("PKTIDX", None, None, None),
+	"beam_id": ("BEAM_ID", None, None, None),
+	"sample_datatype": ("DATATYPE", None, None, None),
+	"rightascension_string": ("RA_STR", None, None, None),
+	"declination_string": ("DEC_STR", None, None, None),
+	"stt_mjd_day": ("STT_IMJD", None, None, None),
+	"stt_mjd_seconds": ("STT_SMJD", None, None, None),
+
+	"observation_id": ("OBSID", None, None, None),
+}
+
+for attribute, key in STANDARD_KEYS.items():
+    _add_property(HashpipeKeyValues, attribute, *key)
