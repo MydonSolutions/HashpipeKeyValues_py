@@ -55,7 +55,7 @@ class HashpipeKeyValues(object):
         self.redis_setchan = REDISSETGW.substitute(host=hostname, inst=instance_id)
 
 
-    def _redis_get(self, key):
+    def get(self, key):
         # print(f"REDIS: hget({self.redis_getchan}, {key})")
         val = self.redis_obj.hget(self.redis_getchan, key)
         if isinstance(val, bytes):
@@ -64,7 +64,7 @@ class HashpipeKeyValues(object):
             val = None 
         return val
 
-    def _redis_set(self, key, val):
+    def set(self, key, val):
         # print(f"REDIS: publish({self.redis_setchan}, {key}={str(val)})")
         return self.redis_obj.publish(self.redis_setchan, f"{key}={str(val)}")
 
@@ -77,9 +77,9 @@ def _add_property(
     doc=None,
 ):
     if getter is None:
-        getter = lambda self: self._redis_get(property_key)
+        getter = lambda self: self.get(property_key)
     if setter is None:
-        setter = lambda self, value: self._redis_set(property_key, value)
+        setter = lambda self, value: self.set(property_key, value)
 
     setattr(
             class_,
