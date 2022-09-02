@@ -48,6 +48,14 @@ class HashpipeKeyValues(object):
         return HashpipeKeyValues(m.group(1), m.group(2), redis_obj)
 
     @staticmethod
+    def broadcast(redis_obj, keys: str or list, values):
+        if isinstance(keys, str):
+            message = f"{keys}={str(values)}"
+        else:
+            message = '\n'.join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
+        return redis_obj.publish(HashpipeKeyValues.BROADCASTGW, message)
+
+    @staticmethod
     def _decode_value(value):
         if isinstance(value, bytes):
             value = value.decode()
