@@ -21,18 +21,27 @@ class HashpipeKeyValues(object):
         self.redis_setchan = REDISSETGW.substitute(host=hostname, inst=instance_id)
 
 
+    @staticmethod
+    def _decode_value(value):
+        if isinstance(value, bytes):
+            value = value.decode()
+        if len(value) == 0:
+            value = None
+        try:
+            value = float(value)
+        except:
+            pass
+        return value
+
+
     def get(self, keys: list or str = None):
         if isinstance(keys, str):
             val = self.redis_obj.hget(self.redis_getchan, keys)
-            if isinstance(val, bytes):
-                val = val.decode()
-            if len(val) == 0:
-                val = None 
-            return val
+            return HashpipeKeyValues._decode_value(val)
         else:
             keyvalues = self.redis_obj.hgetall(self.redis_getchan)
             return {
-                key: val.decode() if isinstance(val, bytes) else None if len(val) == 0 else val
+                key: HashpipeKeyValues._decode_value(val)
                 for key, val in keyvalues.items() if keys is None or key in keys
             }
 
