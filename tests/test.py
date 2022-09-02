@@ -2,7 +2,7 @@ import time
 import redis
 redis_obj = redis.Redis(host="redishost", decode_responses=True)
 
-import hashpipekeyvalues as hpkv
+import hashpipe_keyvalues as hpkv
 kv = hpkv.HashpipeKeyValues('cosmic-gpu-0', 1, redis_obj)
 
 tmp = kv.observation_id
