@@ -93,21 +93,29 @@ STANDARD_KEYS = {
 	"obs_nchans": ("OBSNCHAN", None, None, None),
 	"obs_frequecy": ("OBSFREQ", None, None, None),
 	"obs_bandwidth": ("OBSBW", None, None, None),
-	"channel_bandwidth": ("CHAN_BW", None, None, None),
+	"channel_bandwidth": ("CHAN_BW",
+        None,
+        lambda self, value: self.set(["CHAN_BW", "TBIN"], [value, 1.0/value]),
+        None
+    ),
 
 	"source": ("SRC_NAME", None, None, None),
 	"telescope": ("TELESCOP", None, None, None),
 	"data_directory": ("DATADIR", None, False, None),
 	"project_id": ("PROJID", None, None, None),
-	"backend": ("BACKEND", None, None, None),
-	"observation_stem": ("OBSSTEM", None, None, None),
+	"backend": ("BACKEND", None, False, None),
+	"observation_stem": ("OBSSTEM", None, False, None),
 	"observation_stempath": (None,
         lambda self: list(self.get(["DATADIR", "PROJID", "BACKEND", "OBSSTEM"]).keys()),
         False,
         None
     ),
 
-	"bintime": ("TBIN", None, None, None),
+    "channel_timespan": ("TBIN",
+        None,
+        lambda self, value: self.set(["TBIN", "CHAN_BW"], [value, 1.0/value]),
+        None
+    ),
 	"directio": ("DIRECTIO", None, None, None),
 	"packet_index": ("PKTIDX", None, None, None),
 	"beam_id": ("BEAM_ID", None, None, None),
