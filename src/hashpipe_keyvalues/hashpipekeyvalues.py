@@ -35,7 +35,7 @@ class HashpipeKeyValues(object):
     def instance_at(
         ipaddress:str,
         redis_obj,
-        hostname_regex: str = r"(?P<hostname>.+)-\d+-(?P<instance_id>.+)",
+        hostname_regex: str = r"(?P<hostname>.+)-\d+g-(?P<instance_id>.+)",
         dns = None
     ):
         if dns is not None and ipaddress in dns:

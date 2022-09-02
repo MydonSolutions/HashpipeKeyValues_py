@@ -2,8 +2,10 @@ import time
 import redis
 redis_obj = redis.Redis(host="redishost", decode_responses=True)
 
-import hashpipe_keyvalues as hpkv
-kv = hpkv.HashpipeKeyValues('cosmic-gpu-0', 1, redis_obj)
+from hashpipe_keyvalues import HashpipeKeyValues
+# kv = HashpipeKeyValues('cosmic-gpu-0', 1, redis_obj)
+kv = HashpipeKeyValues.instance_at("192.168.64.100", redis_obj)
+print(kv)
 
 tmp = kv.observation_id
 test_value = "Ting!!!!"
