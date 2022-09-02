@@ -85,7 +85,7 @@ class HashpipeKeyValues(object):
             message = f"{keys}={str(values)}"
         else:
             message = '\n'.join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
-        return self.redis_obj.publish(self.redis_setchan, message)
+        return self.redis_obj.publish(self.redis_setchan, message), message
 
 def _add_property(
     class_,
