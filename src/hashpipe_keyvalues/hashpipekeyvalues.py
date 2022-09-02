@@ -179,7 +179,7 @@ STANDARD_KEYS = {
 	"backend": ("BACKEND", None, False, None),
 	"observation_stem": ("OBSSTEM", None, False, None),
 	"observation_stempath": (None,
-        lambda self: list(self.get(["DATADIR", "PROJID", "BACKEND", "OBSSTEM"]).keys()),
+        lambda self: list(self.get(["DATADIR", "PROJID", "BACKEND", "OBSSTEM"]).values()),
         False,
         None
     ),
