@@ -45,14 +45,13 @@ class HashpipeKeyValues(object):
                 for key, val in keyvalues.items() if keys is None or key in keys
             }
 
-    def set(self, key: str = None, val = None, values: dict = None):
-        if values is not None:
-            return self.redis_obj.publish(
-                self.redis_setchan,
-                '\n'.join(f"{key}={str(val)}" for key, val in values.items())
-            )
+
+    def set(self, keys: str or list, values):
+        if isinstance(keys, str):
+            message = f"{keys}={str(values)}"
         else:
-            return self.redis_obj.publish(self.redis_setchan, f"{key}={str(val)}")
+            message = '\n'.join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
+        return self.redis_obj.publish(self.redis_setchan, message)
 
 def _add_property(
     class_,
