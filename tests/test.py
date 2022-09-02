@@ -20,6 +20,8 @@ assert kv.observation_id == tmp
 
 print(kv.observation_stempath)
 
+print(kv.antenna_names)
+
 tmp = kv.channel_bandwidth
 
 for bw in [3.1414, tmp]:

@@ -118,7 +118,7 @@ def _add_property(
 
 def _gather_antenna_names(hpkv, separator:str = ','):
     # manage limited entry length
-    nants = hpkv.nof_antenna or 1
+    nants = hpkv.nof_antennas or 1
 
     antname_list = []
     key_enum = 0
