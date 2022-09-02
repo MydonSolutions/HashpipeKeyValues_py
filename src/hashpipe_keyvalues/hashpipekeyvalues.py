@@ -21,18 +21,29 @@ class HashpipeKeyValues(object):
         self.redis_setchan = REDISSETGW.substitute(host=hostname, inst=instance_id)
 
 
-    def get(self, key):
-        # print(f"REDIS: hget({self.redis_getchan}, {key})")
-        val = self.redis_obj.hget(self.redis_getchan, key)
-        if isinstance(val, bytes):
-            val = val.decode()
-        if len(val) == 0:
-            val = None 
-        return val
+    def get(self, keys: list or str = None):
+        if isinstance(keys, str):
+            val = self.redis_obj.hget(self.redis_getchan, keys)
+            if isinstance(val, bytes):
+                val = val.decode()
+            if len(val) == 0:
+                val = None 
+            return val
+        else:
+            keyvalues = self.redis_obj.hgetall(self.redis_getchan)
+            return {
+                key: val.decode() if isinstance(val, bytes) else None if len(val) == 0 else val
+                for key, val in keyvalues.items() if keys is None or key in keys
+            }
 
-    def set(self, key, val):
-        # print(f"REDIS: publish({self.redis_setchan}, {key}={str(val)})")
-        return self.redis_obj.publish(self.redis_setchan, f"{key}={str(val)}")
+    def set(self, key: str = None, val = None, values: dict = None):
+        if values is not None:
+            return self.redis_obj.publish(
+                self.redis_setchan,
+                '\n'.join(f"{key}={str(val)}" for key, val in values.items())
+            )
+        else:
+            return self.redis_obj.publish(self.redis_setchan, f"{key}={str(val)}")
 
 def _add_property(
     class_,
@@ -83,7 +94,7 @@ STANDARD_KEYS = {
 	"backend": ("BACKEND", None, None, None),
 	"observation_stem": ("OBSSTEM", None, None, None),
 	"observation_stempath": (None,
-        lambda self: [self.data_directory, self.project_id, self.backend, self.observation_stem],
+        lambda self: list(self.get(["DATADIR", "PROJID", "BACKEND", "OBSSTEM"]).keys()),
         False,
         None
     ),
