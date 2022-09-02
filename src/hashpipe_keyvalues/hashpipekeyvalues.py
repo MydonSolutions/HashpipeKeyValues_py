@@ -21,6 +21,9 @@ class HashpipeKeyValues(object):
         self.redis_getchan = self.GETGW.substitute(host=hostname, inst=instance_id)
         self.redis_setchan = self.SETGW.substitute(host=hostname, inst=instance_id)
 
+    def __hash__(self):
+        return hash(f"{self.hostname}.{self.instance_id}")
+
     @staticmethod
     def _decode_value(value):
         if isinstance(value, bytes):
