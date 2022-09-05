@@ -186,7 +186,7 @@ STANDARD_KEYS = {
 	"backend": ("BACKEND", None, False, None),
 	"observation_stem": ("OBSSTEM", None, False, None),
 	"observation_stempath": (None,
-        lambda self: list(self.get(["DATADIR", "PROJID", "BACKEND", "OBSSTEM"]).values()),
+        lambda self: [self.data_directory, self.project_id, self.backend, self.observation_stem],
         False,
         None
     ),
