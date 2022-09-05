@@ -25,7 +25,7 @@ class HashpipeKeyValues(object):
 
         if propertytuple_dict is not None:
             for property_name, propertytuple in propertytuple_dict.items():
-                HashpipeKeyValues.add_property(self, property_name, *propertytuple)
+                HashpipeKeyValues.add_property(self.__class__, property_name, *propertytuple)
 
 
     def __str__(self):
