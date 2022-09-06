@@ -182,8 +182,16 @@ STANDARD_KEYS = {
 	"source": ("SRC_NAME", None, None, None),
 	"telescope": ("TELESCOP", None, None, None),
 	"data_directory": ("DATADIR", None, False, None),
-	"project_id": ("PROJID", None, None, None),
-	"backend": ("BACKEND", None, False, None),
+    "project_id": ("PROJID",
+        lambda self: self.get("PROJID")[0:23],
+        None,
+        None
+    ),
+    "backend": ("BACKEND",
+        lambda self: self.get("BACKEND")[0:23],
+        None,
+        None
+    ),
 	"observation_stem": ("OBSSTEM", None, False, None),
 	"observation_stempath": (None,
         lambda self: [self.data_directory, self.project_id, self.backend, self.observation_stem],
