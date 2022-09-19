@@ -65,6 +65,8 @@ class HashpipeKeyValues(object):
     def _decode_value(value):
         if isinstance(value, bytes):
             value = value.decode()
+        if value is None:
+             return value
         if len(value) == 0:
             value = None
         try:
