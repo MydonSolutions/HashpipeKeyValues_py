@@ -3,8 +3,6 @@ import socket
 import re
 from typing import Callable
 
-from .keyvalueproperty import KeyValueProperty
-
 
 class HashpipeKeyValues(object):
     """
@@ -128,7 +126,7 @@ class HashpipeKeyValues(object):
 
 
 def HashpipeKeyValues_defineKeys(
-    keyvalue_propertytuple_dict: "dict[str, KeyValueProperty]",
+    keyvalue_propertytuple_dict: "dict[str, tuple]",
 ):
     for property_name, property_tuple in keyvalue_propertytuple_dict.items():
         HashpipeKeyValues._add_property(property_name, *property_tuple)
