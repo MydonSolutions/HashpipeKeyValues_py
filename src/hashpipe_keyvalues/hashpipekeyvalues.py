@@ -1,11 +1,14 @@
 from string import Template
 import socket
 import re
+from typing import Callable
+
+from .keyvalueproperty import KeyValueProperty
 
 
 class HashpipeKeyValues(object):
     """
-    This class aims to encapsulate the logic related to accessing 
+    This class aims to encapsulate the logic related to accessing
     standard key-values in Hashpipe"s status-buffer.
     """
 
@@ -15,7 +18,7 @@ class HashpipeKeyValues(object):
     SETGW_re = r"hashpipe://(?P<host>[^/]+)/(?P<inst>[^/]+)/set"
     BROADCASTGW = "hashpipe:///set"
 
-    def __init__(self, hostname, instance_id, redis_obj, propertytuple_dict=None):
+    def __init__(self, hostname, instance_id, redis_obj):
         self.hostname = hostname
         self.instance_id = instance_id
         self.redis_obj = redis_obj
@@ -23,26 +26,18 @@ class HashpipeKeyValues(object):
         self.redis_getchan = self.GETGW.substitute(host=hostname, inst=instance_id)
         self.redis_setchan = self.SETGW.substitute(host=hostname, inst=instance_id)
 
-        if propertytuple_dict is not None:
-            for property_name, propertytuple in propertytuple_dict.items():
-                HashpipeKeyValues.add_property(self.__class__, property_name, *propertytuple)
-
-
     def __str__(self):
         return f"{self.hostname}.{self.instance_id}"
-
 
     def __hash__(self):
         return hash(str(self))
 
-
     @staticmethod
     def instance_at(
-        ipaddress:str,
+        ipaddress: str,
         redis_obj,
         hostname_regex: str = r"(?P<hostname>.+)-\d+g-(?P<instance_id>.+)",
-        dns = None,
-        propertytuple_dict=None
+        dns=None,
     ):
         if dns is not None and ipaddress in dns:
             hostname = dns[ipaddress]
@@ -51,14 +46,14 @@ class HashpipeKeyValues(object):
 
         m = re.match(hostname_regex, hostname)
         assert m is not None, f"'{hostname}' does not match r`{hostname_regex}`"
-        return HashpipeKeyValues(m.group(1), m.group(2), redis_obj, propertytuple_dict)
+        return HashpipeKeyValues(m.group(1), m.group(2), redis_obj)
 
     @staticmethod
     def broadcast(redis_obj, keys: str or list, values):
         if isinstance(keys, str):
             message = f"{keys}={str(values)}"
         else:
-            message = '\n'.join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
+            message = "\n".join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
         return redis_obj.publish(HashpipeKeyValues.BROADCASTGW, message)
 
     @staticmethod
@@ -66,7 +61,7 @@ class HashpipeKeyValues(object):
         if isinstance(value, bytes):
             value = value.decode()
         if value is None:
-             return value
+            return value
         if len(value) == 0:
             value = None
         try:
@@ -74,7 +69,6 @@ class HashpipeKeyValues(object):
         except:
             pass
         return value
-
 
     def get(self, keys: list or str = None):
         if isinstance(keys, str):
@@ -84,145 +78,57 @@ class HashpipeKeyValues(object):
             keyvalues = self.redis_obj.hgetall(self.redis_getchan)
             return {
                 key: HashpipeKeyValues._decode_value(val)
-                for key, val in keyvalues.items() if keys is None or key in keys
+                for key, val in keyvalues.items()
+                if keys is None or key in keys
             }
-
 
     def set(self, keys: str or list, values):
         if isinstance(keys, str):
             message = f"{keys}={str(values)}"
         else:
-            message = '\n'.join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
+            message = "\n".join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
         return self.redis_obj.publish(self.redis_setchan, message), message
 
     @staticmethod
-    def add_property(
-        recipient,
-        property_name,
-        property_key,
-        getter=None,
-        setter=None,
-        doc=None,
+    def _add_property(
+        property_name: str,
+        key: str,
+        valueGetter: Callable,
+        valueSetter: Callable,
+        valueDocumentation: str,
     ):
-        if getter is None:
-            assert property_key is not None, f"Cannot use default getter without a key for {property_name}"
-            getter = lambda self: self.get(property_key)
-        if setter is None:
-            assert property_key is not None, f"Cannot use default setter without a key for {property_name}"
-            setter = lambda self, value: self.set(property_key, value)
-        elif setter is False:
+        if valueGetter is None:
+            assert (
+                key is not None
+            ), f"Cannot use default getter without a key for {property_name}"
+            getter = lambda self: self.get(key)
+        else:
+            getter = valueGetter
+
+        if valueSetter is None:
+            assert (
+                key is not None
+            ), f"Cannot use default setter without a key for {property_name}"
+            setter = lambda self, value: self.set(key, value)
+        elif valueSetter is False:
             setter = None
+        else:
+            setter = valueSetter
 
         setattr(
-                recipient,
-                property_name,
-                property(
-                        fget=getter,
-                        fset=setter,
-                        fdel=None,
-                        doc=doc,
-                )
+            HashpipeKeyValues,
+            property_name,
+            property(
+                fget=getter,
+                fset=setter,
+                fdel=None,
+                doc=valueDocumentation,
+            ),
         )
 
 
-def _gather_antenna_names(hpkv, separator:str = ','):
-    # manage limited entry length
-    nants = hpkv.nof_antennas or 1
-
-    antname_list = []
-    key_enum = 0
-
-    while len(antname_list) < nants:
-        antnames = hpkv.get(f"ANTNMS{key_enum:02d}")
-        key_enum += 1
-        antname_list += antnames.split(separator)
-
-    return antname_list
-
-
-def _generate_antenna_names(ant_names:list, separator:str = ','):
-    # manage limited entry length
-    if len(ant_names) == 0:
-        return [], []
-
-    antname_dict = {}
-    key_enum = 0
-    current_str = ant_names[0]
-
-    for ant in ant_names[1:]:
-        addition = f"{separator}{ant}"
-        if len(addition) + len(current_str) > 68:
-            antname_dict[f"ANTNMS{key_enum:02d}"] = current_str
-            key_enum += 1
-            current_str = ant
-        else:
-            current_str += addition
-
-    if len(current_str) > 0:
-        antname_dict[f"ANTNMS{key_enum:02d}"] = current_str
-    return antname_dict.keys(), antname_dict.values()
-
-
-STANDARD_KEYS = {
-	"blocksize": ("BLOCSIZE", None, False, None),
-
-    "nof_pols": ("NPOL", None, None, None),
-    "nof_bits": ("NBITS", None, None, None),
-    "nof_beams": ("NBEAM", None, None, None),
-    "nof_antennas": ("NANTS", None, None, None),
-    "nof_channels": ("NCHAN", None, None, None),
-    
-	"observation_nof_channels": ("OBSNCHAN", None, None, None),
-	"observation_frequecy": ("OBSFREQ", None, None, None),
-	"observation_bandwidth": ("OBSBW", None, None, None),
-	"channel_bandwidth": ("CHAN_BW",
-        None,
-        lambda self, value: self.set(["CHAN_BW", "TBIN"], [value, 1.0/value]),
-        None
-    ),
-
-	"source": ("SRC_NAME", None, None, None),
-	"telescope": ("TELESCOP", None, None, None),
-	"data_directory": ("DATADIR", None, False, None),
-    "project_id": ("PROJID",
-        lambda self: self.get("PROJID")[0:23],
-        None,
-        None
-    ),
-    "backend": ("BACKEND",
-        lambda self: self.get("BACKEND")[0:23],
-        None,
-        None
-    ),
-	"observation_stem": ("OBSSTEM", None, False, None),
-	"observation_stempath": (None,
-        lambda self: [self.data_directory, self.project_id, self.backend, self.observation_stem],
-        False,
-        None
-    ),
-
-    "channel_timespan": ("TBIN",
-        None,
-        lambda self, value: self.set(["TBIN", "CHAN_BW"], [value, 1.0/value]),
-        None
-    ),
-	"directio": ("DIRECTIO", None, None, None),
-	"packet_index": ("PKTIDX", None, None, None),
-	"beam_id": ("BEAM_ID", None, None, None),
-	"sample_datatype": ("DATATYPE", None, None, None),
-	"rightascension_string": ("RA_STR", None, None, None),
-	"declination_string": ("DEC_STR", None, None, None),
-	"stt_mjd_day": ("STT_IMJD", None, None, None),
-	"stt_mjd_seconds": ("STT_SMJD", None, None, None),
-
-	"observation_id": ("OBSID", None, None, None),
-
-    "antenna_names": (None,
-        lambda self: _gather_antenna_names(self),
-        lambda self, value: self.set(*_generate_antenna_names(self, value)),
-        None
-    ),
-}
-
-for attribute, key in STANDARD_KEYS.items():
-    HashpipeKeyValues.add_property(HashpipeKeyValues, attribute, *key)
+def HashpipeKeyValues_defineKeys(
+    keyvalue_propertytuple_dict: "dict[str, KeyValueProperty]",
+):
+    for property_name, property_tuple in keyvalue_propertytuple_dict.items():
+        HashpipeKeyValues._add_property(property_name, *property_tuple)

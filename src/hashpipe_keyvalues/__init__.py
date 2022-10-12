@@ -1,1 +1,1 @@
-from .hashpipekeyvalues import HashpipeKeyValues
+from .hashpipekeyvalues import HashpipeKeyValues, HashpipeKeyValues_defineKeys
