@@ -3,6 +3,8 @@ import socket
 import re
 from typing import Callable
 
+from .hashpipekeyvaluescache import HashpipeKeyValuesCache
+
 
 class HashpipeKeyValues(object):
     """
@@ -61,12 +63,11 @@ class HashpipeKeyValues(object):
         if value is None:
             return value
         if len(value) == 0:
-            value = None
+            return None
         try:
-            value = float(value)
+            return float(value)
         except:
-            pass
-        return value
+            return value
 
     def get(self, keys: list or str = None):
         if isinstance(keys, str):
@@ -86,6 +87,13 @@ class HashpipeKeyValues(object):
         else:
             message = "\n".join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
         return self.redis_obj.publish(self.redis_setchan, message), message
+
+    def get_cache(self):
+        return HashpipeKeyValuesCache(
+            self.hostname,
+            self.instance_id,
+            self.get()
+        )
 
     @staticmethod
     def _add_property(
@@ -130,3 +138,4 @@ def HashpipeKeyValues_defineKeys(
 ):
     for property_name, property_tuple in keyvalue_propertytuple_dict.items():
         HashpipeKeyValues._add_property(property_name, *property_tuple)
+        HashpipeKeyValuesCache._add_property(property_name, *property_tuple)
