@@ -1,7 +1,8 @@
 import time
 import redis
 
-from hashpipe_keyvalues.standard import HashpipeKeyValues, HashpipeKeyValues_defineKeys
+from hashpipe_keyvalues.standard import HashpipeKeyValues
+from hashpipe_keyvalues.keyvalues import KeyValues_defineKeys
 
 redis_obj = redis.Redis(host="redishost", decode_responses=True)
 
@@ -9,7 +10,7 @@ NONSTANDARD_KEYS = {
     "bogus": (None, lambda self: True, False, None),
 }
 
-HashpipeKeyValues_defineKeys(NONSTANDARD_KEYS)
+KeyValues_defineKeys(HashpipeKeyValues, NONSTANDARD_KEYS)
 
 # kv = HashpipeKeyValues('cosmic-gpu-0', 1, redis_obj)
 kv = HashpipeKeyValues.instance_at("192.168.64.100", redis_obj)

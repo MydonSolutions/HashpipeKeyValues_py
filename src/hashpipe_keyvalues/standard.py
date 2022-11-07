@@ -1,4 +1,5 @@
-from .hashpipekeyvalues import HashpipeKeyValues, HashpipeKeyValues_defineKeys
+from .keyvalues import KeyValues_defineKeys
+from .hashpipekeyvalues import HashpipeKeyValues
 from .kvpsets.standard import KEYS as STANDARD_KEYS
 
-HashpipeKeyValues_defineKeys(STANDARD_KEYS)
+KeyValues_defineKeys(HashpipeKeyValues, STANDARD_KEYS)

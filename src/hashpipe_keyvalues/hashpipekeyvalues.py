@@ -1,14 +1,14 @@
 from string import Template
 import socket
 import re
-from typing import Callable
 
+from .keyvalues import KeyValues
 from .hashpipekeyvaluescache import HashpipeKeyValuesCache
 
 
-class HashpipeKeyValues(object):
+class HashpipeKeyValues(KeyValues):
     """
-    This class aims to encapsulate the logic related to accessing
+    This class encapsulates the logic related to accessing
     standard key-values in Hashpipe"s status-buffer.
     """
 
@@ -31,6 +31,28 @@ class HashpipeKeyValues(object):
 
     def __hash__(self):
         return hash(str(self))
+
+    def get(self, keys: list or str = None):
+        if isinstance(keys, str):
+            val = self.redis_obj.hget(self.redis_getchan, keys)
+            return HashpipeKeyValues._decode_value(val)
+        else:
+            keyvalues = self.redis_obj.hgetall(self.redis_getchan)
+            return {
+                key: HashpipeKeyValues._decode_value(val)
+                for key, val in keyvalues.items()
+                if keys is None or key in keys
+            }
+
+    def set(self, keys: str or list, values):
+        if isinstance(keys, str):
+            message = f"{keys}={str(values)}"
+        else:
+            message = "\n".join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
+        return self.redis_obj.publish(self.redis_setchan, message), message
+
+    def get_cache(self):
+        return HashpipeKeyValuesCache(self.hostname, self.instance_id, self.get())
 
     @staticmethod
     def instance_at(
@@ -68,74 +90,3 @@ class HashpipeKeyValues(object):
             return float(value)
         except:
             return value
-
-    def get(self, keys: list or str = None):
-        if isinstance(keys, str):
-            val = self.redis_obj.hget(self.redis_getchan, keys)
-            return HashpipeKeyValues._decode_value(val)
-        else:
-            keyvalues = self.redis_obj.hgetall(self.redis_getchan)
-            return {
-                key: HashpipeKeyValues._decode_value(val)
-                for key, val in keyvalues.items()
-                if keys is None or key in keys
-            }
-
-    def set(self, keys: str or list, values):
-        if isinstance(keys, str):
-            message = f"{keys}={str(values)}"
-        else:
-            message = "\n".join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
-        return self.redis_obj.publish(self.redis_setchan, message), message
-
-    def get_cache(self):
-        return HashpipeKeyValuesCache(
-            self.hostname,
-            self.instance_id,
-            self.get()
-        )
-
-    @staticmethod
-    def _add_property(
-        property_name: str,
-        key: str,
-        valueGetter: Callable,
-        valueSetter: Callable,
-        valueDocumentation: str,
-    ):
-        if valueGetter is None:
-            assert (
-                key is not None
-            ), f"Cannot use default getter without a key for {property_name}"
-            getter = lambda self: self.get(key)
-        else:
-            getter = valueGetter
-
-        if valueSetter is None:
-            assert (
-                key is not None
-            ), f"Cannot use default setter without a key for {property_name}"
-            setter = lambda self, value: self.set(key, value)
-        elif valueSetter is False:
-            setter = None
-        else:
-            setter = valueSetter
-
-        setattr(
-            HashpipeKeyValues,
-            property_name,
-            property(
-                fget=getter,
-                fset=setter,
-                fdel=None,
-                doc=valueDocumentation,
-            ),
-        )
-
-
-def HashpipeKeyValues_defineKeys(
-    keyvalue_propertytuple_dict: "dict[str, tuple]",
-):
-    for property_name, property_tuple in keyvalue_propertytuple_dict.items():
-        HashpipeKeyValues._add_property(property_name, *property_tuple)
-        HashpipeKeyValuesCache._add_property(property_name, *property_tuple)
