@@ -1,6 +1,7 @@
 from string import Template
 import socket
 import re
+from datetime import datetime, timedelta
 
 from .keyvalues import KeyValues, KeyValues_defineKeys
 from .hashpipekeyvalues import HashpipeKeyValues
@@ -109,7 +110,7 @@ KeyValues_defineKeys(
         ),
         "pulse": (
             "PULSE",
-            None,
+            lambda self: datetime.strptime(self.get("PULSE"), "%a %b %d %H:%M:%S %Y"),
             False,
             None,
         ),
@@ -122,6 +123,12 @@ KeyValues_defineKeys(
         "is_idle": (
             "STATUS",
             lambda self: self.status.startswith("WAITING"),
+            False,
+            None,
+        ),
+        "is_alive": (
+            "PULSE",
+            lambda self: abs(datetime.now() - self.pulse) < timedelta(seconds=3),
             False,
             None,
         ),
