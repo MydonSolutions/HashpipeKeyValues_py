@@ -110,7 +110,7 @@ KeyValues_defineKeys(
         ),
         "pulse": (
             "PULSE",
-            lambda self: datetime.strptime(self.get("PULSE"), "%a %b %d %H:%M:%S %Y"),
+            lambda self: datetime.strptime(self.get("PULSE"), "%Y/%m/%d %H:%M:%S %z"),
             False,
             None,
         ),
