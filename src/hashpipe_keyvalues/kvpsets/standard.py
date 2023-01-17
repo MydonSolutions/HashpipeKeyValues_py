@@ -1,4 +1,4 @@
-def _gather_antenna_names(hpkv, separator: str = ","):
+def _gather_antennaCsvEntries(key_prefix, hpkv, separator: str = ","):
     # manage limited entry length
     nants = hpkv.nof_antennas or 1
 
@@ -6,34 +6,34 @@ def _gather_antenna_names(hpkv, separator: str = ","):
     key_enum = 0
 
     while len(antname_list) < nants:
-        antnames = hpkv.get(f"ANTNMS{key_enum:02d}")
+        antnames = hpkv.get(f"{key_prefix}{key_enum:02d}")
         key_enum += 1
         antname_list += antnames.split(separator)
 
     return antname_list
 
 
-def _generate_antenna_names(ant_names: list, separator: str = ","):
+def _generate_antennaCsvEntries(key_prefix, ant_values, separator: str = ","):
+    assert len(key_prefix) <= 6
     # manage limited entry length
-    if len(ant_names) == 0:
-        return [], []
+    keyvalues = {}
+    if len(ant_values) == 0:
+        return keyvalues
 
-    antname_dict = {}
     key_enum = 0
-    current_str = ant_names[0]
+    current_str = ant_values[0]
 
-    for ant in ant_names[1:]:
+    for ant in ant_values[1:]:
         addition = f"{separator}{ant}"
         if len(addition) + len(current_str) > 68:
-            antname_dict[f"ANTNMS{key_enum:02d}"] = current_str
+            keyvalues[f"{key_prefix}%02d" % key_enum] = current_str
             key_enum += 1
             current_str = ant
         else:
             current_str += addition
 
-    if len(current_str) > 0:
-        antname_dict[f"ANTNMS{key_enum:02d}"] = current_str
-    return antname_dict.keys(), antname_dict.values()
+    keyvalues[f"{key_prefix}%02d" % key_enum] = current_str
+    return keyvalues
 
 
 KEYS = {
@@ -55,8 +55,22 @@ KEYS = {
     "source": ("SRC_NAME", None, None, None),
     "telescope": ("TELESCOP", None, None, None),
     "data_directory": ("DATADIR", None, False, None),
-    "project_id": ("PROJID", lambda self: self.get("PROJID")[0:23], None, None),
-    "backend": ("BACKEND", lambda self: self.get("BACKEND")[0:23], None, None),
+    "project_id": (
+        "PROJID",
+        lambda self: self.get("PROJID")[0:23]
+        if self.get("PROJID") is not None
+        else ".",
+        None,
+        None,
+    ),
+    "backend": (
+        "BACKEND",
+        lambda self: self.get("BACKEND")[0:23]
+        if self.get("BACKEND") is not None
+        else ".",
+        None,
+        None,
+    ),
     "observation_stem": ("OBSSTEM", None, False, None),
     "observation_stempath": (
         None,
@@ -86,8 +100,18 @@ KEYS = {
     "observation_id": ("OBSID", None, None, None),
     "antenna_names": (
         None,
-        lambda self: _gather_antenna_names(self),
-        lambda self, value: self.set(*_generate_antenna_names(self, value)),
+        lambda self: _gather_antennaCsvEntries("ANTNMS", self),
+        lambda self, value: self.set(
+            *_generate_antennaCsvEntries("ANTNMS", self, value)
+        ),
+        None,
+    ),
+    "antenna_flags": (
+        None,
+        lambda self: _gather_antennaCsvEntries("ANTFLG", self),
+        lambda self, value: self.set(
+            *_generate_antennaCsvEntries("ANTFLG", self, value)
+        ),
         None,
     ),
 }
