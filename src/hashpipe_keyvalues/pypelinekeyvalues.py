@@ -110,7 +110,9 @@ KeyValues_defineKeys(
         ),
         "pulse": (
             "PULSE",
-            lambda self: datetime.strptime(self.get("PULSE"), "%Y/%m/%d %H:%M:%S %z"),
+            lambda self: datetime.strptime(
+                self.get("PULSE", "1970/01/01 00:00:00"), "%Y/%m/%d %H:%M:%S"
+            ),
             False,
             None,
         ),
@@ -128,7 +130,7 @@ KeyValues_defineKeys(
         ),
         "is_alive": (
             "PULSE",
-            lambda self: abs(datetime.now() - self.pulse) < timedelta(seconds=3),
+            lambda self: abs(datetime.now() - self.pulse) < timedelta(seconds=1.5),
             False,
             None,
         ),

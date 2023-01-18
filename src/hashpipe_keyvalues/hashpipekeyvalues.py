@@ -32,14 +32,14 @@ class HashpipeKeyValues(KeyValues):
     def __hash__(self):
         return hash(str(self))
 
-    def get(self, keys: list or str = None):
+    def get(self, keys: list or str = None, fallback=None):
         if isinstance(keys, str):
             val = self.redis_obj.hget(self.redis_getchan, keys)
-            return HashpipeKeyValues._decode_value(val)
+            return HashpipeKeyValues._decode_value(val, fallback=fallback)
         else:
             keyvalues = self.redis_obj.hgetall(self.redis_getchan)
             return {
-                key: HashpipeKeyValues._decode_value(val)
+                key: HashpipeKeyValues._decode_value(val, fallback=fallback)
                 for key, val in keyvalues.items()
                 if keys is None or key in keys
             }
@@ -84,13 +84,13 @@ class HashpipeKeyValues(KeyValues):
         return redis_obj.publish(HashpipeKeyValues.BROADCASTGW, message)
 
     @staticmethod
-    def _decode_value(value):
+    def _decode_value(value, fallback=None):
         if isinstance(value, bytes):
             value = value.decode()
         if value is None:
-            return value
+            return fallback
         if len(value) == 0:
-            return None
+            return fallback
         try:
             return float(value)
         except:

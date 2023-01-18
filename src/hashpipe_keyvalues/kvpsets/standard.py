@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+
+
 def _gather_antennaCsvEntries(key_prefix, hpkv, separator: str = ","):
     # manage limited entry length
     nants = hpkv.nof_antennas or 1
@@ -44,7 +47,7 @@ KEYS = {
     "nof_antennas": ("NANTS", None, None, None),
     "nof_channels": ("NCHAN", None, None, None),
     "observation_nof_channels": ("OBSNCHAN", None, None, None),
-    "observation_frequecy": ("OBSFREQ", None, None, None),
+    "observation_frequency": ("OBSFREQ", None, None, None),
     "observation_bandwidth": ("OBSBW", None, None, None),
     "channel_bandwidth": (
         "CHAN_BW",
@@ -112,6 +115,20 @@ KEYS = {
         lambda self, value: self.set(
             *_generate_antennaCsvEntries("ANTFLG", self, value)
         ),
+        None,
+    ),
+    "pulse": (
+        "DAQPULSE",
+        lambda self: datetime.strptime(
+            self.get("DAQPULSE", "Thu Jan 01 00:00:00 1970"), "%a %b %d %H:%M:%S %Y"
+        ),
+        False,
+        None,
+    ),
+    "is_alive": (
+        "DAQPULSE",
+        lambda self: abs(datetime.now() - self.pulse) < timedelta(seconds=3),
+        False,
         None,
     ),
 }
