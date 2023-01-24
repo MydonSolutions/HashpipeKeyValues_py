@@ -60,17 +60,13 @@ KEYS = {
     "data_directory": ("DATADIR", None, False, None),
     "project_id": (
         "PROJID",
-        lambda self: self.get("PROJID")[0:23]
-        if self.get("PROJID") is not None
-        else ".",
+        lambda self: self.get("PROJID", ".")[0:23],
         None,
         None,
     ),
     "backend": (
         "BACKEND",
-        lambda self: self.get("BACKEND")[0:23]
-        if self.get("BACKEND") is not None
-        else ".",
+        lambda self: self.get("BACKEND", ".")[0:23],
         None,
         None,
     ),
