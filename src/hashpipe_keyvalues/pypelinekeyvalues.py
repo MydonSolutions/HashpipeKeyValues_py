@@ -1,5 +1,6 @@
 from string import Template
 import socket
+import json
 import re
 from datetime import datetime, timedelta
 
@@ -31,14 +32,14 @@ class PypelineKeyValues(KeyValues):
     def __hash__(self):
         return hash(str(self))
 
-    def get(self, keys: list or str = None):
+    def get(self, keys: list or str = None, fallback=None):
         if isinstance(keys, str):
             val = self.redis_obj.hget(self.redis_hash, keys)
-            return PypelineKeyValues._decode_value(val)
+            return HashpipeKeyValues._decode_value(val, fallback=fallback)
         else:
             keyvalues = self.redis_obj.hgetall(self.redis_hash)
             return {
-                key: PypelineKeyValues._decode_value(val)
+                key: HashpipeKeyValues._decode_value(val, fallback=fallback)
                 for key, val in keyvalues.items()
                 if keys is None or key in keys
             }
@@ -80,17 +81,37 @@ class PypelineKeyValues(KeyValues):
         return redis_obj.publish(PypelineKeyValues.BROADCASTGW, message)
 
     @staticmethod
-    def _decode_value(value):
+    def _decode_value(value, fallback=None):
         if isinstance(value, bytes):
             value = value.decode()
         if value is None:
-            return value
+            return fallback
         if len(value) == 0:
-            return None
+            return fallback
         try:
             return float(value)
         except:
             return value
+
+
+def _get_process_states(processes_string_value):
+    processes_state_timestamp_dict = json.loads(processes_string_value)
+    for process_id, state_timestamp_dict in processes_state_timestamp_dict.items():
+        start = state_timestamp_dict["Start"]
+        finish = state_timestamp_dict["Finish"]
+        error = state_timestamp_dict["Error"]
+        if start is None:
+            processes_state_timestamp_dict[process_id] = "Idle"
+        elif finish is not None and finish > start:
+            processes_state_timestamp_dict[process_id] = "Idle"
+        elif error is not None and error > start:
+            processes_state_timestamp_dict[process_id] = "Error"
+        elif finish is not None and finish < start:
+            processes_state_timestamp_dict[process_id] = "Busy"
+        else:
+            processes_state_timestamp_dict[process_id] = "Unknown"
+
+    return processes_state_timestamp_dict
 
 
 KeyValues_defineKeys(
@@ -124,13 +145,19 @@ KeyValues_defineKeys(
         ),
         "is_idle": (
             "STATUS",
-            lambda self: self.status.startswith("WAITING"),
+            lambda self: self.status.startswith("0"),
             False,
             None,
         ),
         "is_alive": (
             "PULSE",
             lambda self: abs(datetime.now() - self.pulse) < timedelta(seconds=1.5),
+            False,
+            None,
+        ),
+        "process_states": (
+            "PROCESSES",
+            lambda self: _get_process_states(self.get("PROCESSES", "{}")),
             False,
             None,
         ),
