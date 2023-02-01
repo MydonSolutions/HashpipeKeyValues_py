@@ -15,9 +15,9 @@ class PypelineKeyValues(KeyValues):
     See https://github.com/MydonSolutions/hpguppi_pypeline.
     """
 
-    HASH = Template("postprocpype://${host}/${inst}/status")
-    HASH_re = r"postprocpype://(?P<host>[^/]+)/(?P<inst>[^/]+)/status"
-    BROADCASTGW = "postprocpype:///set"
+    HASH = Template("pypeline://${host}/${inst}/status")
+    HASH_re = r"pypeline://(?P<host>[^/]+)/(?P<inst>[^/]+)/status"
+    BROADCASTGW = "pypeline:///set"
 
     def __init__(self, hostname, instance_id, redis_obj):
         self.hostname = hostname
@@ -117,10 +117,10 @@ def _get_process_states(processes_string_value):
 KeyValues_defineKeys(
     PypelineKeyValues,
     {
-        "primary_process": (
-            "#PRIMARY",
+        "context": (
+            "#CONTEXT",
             None,
-            False,
+            None,
             None,
         ),
         "stages": (
