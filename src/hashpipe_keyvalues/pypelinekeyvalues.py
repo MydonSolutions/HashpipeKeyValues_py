@@ -32,7 +32,7 @@ class PypelineKeyValues(KeyValues):
     def __hash__(self):
         return hash(str(self))
 
-    def get(self, keys: list or str = None, fallback=None):
+    def get(self, keys: list or str=None, fallback=None):
         if isinstance(keys, str):
             val = self.redis_obj.hget(self.redis_hash, keys)
             return HashpipeKeyValues._decode_value(val, fallback=fallback)
@@ -44,11 +44,13 @@ class PypelineKeyValues(KeyValues):
                 if keys is None or key in keys
             }
 
-    def set(self, keys: str or list, values):
+    def set(self, keys: str or list=None, values=None, mapping=None):
         if isinstance(keys, str):
             return self.redis_obj.hset(self.redis_hash, keys, values)
         else:
-            return self.redis_obj.hset(self.redis_hash, mapping=dict(zip(keys, values)))
+            if mapping is None:
+                mapping=dict(zip(keys, values))
+            return self.redis_obj.hset(self.redis_hash, mapping=mapping)
 
     @staticmethod
     def instance_at(
@@ -73,9 +75,11 @@ class PypelineKeyValues(KeyValues):
         )
 
     @staticmethod
-    def broadcast(redis_obj, keys: str or list, values):
+    def broadcast(redis_obj, keys: str or list=None, values=None, mapping=None):
         if isinstance(keys, str):
             message = f"{keys}={str(values)}"
+        elif mapping is not None:
+            message = "\n".join(f"{key}={str(value)}" for key, value in mapping.items())
         else:
             message = "\n".join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
         return redis_obj.publish(PypelineKeyValues.BROADCASTGW, message)

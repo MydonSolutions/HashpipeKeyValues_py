@@ -44,9 +44,11 @@ class HashpipeKeyValues(KeyValues):
                 if keys is None or key in keys
             }
 
-    def set(self, keys: str or list, values):
+    def set(self, keys: str or list, values, mapping=None):
         if isinstance(keys, str):
             message = f"{keys}={str(values)}"
+        elif mapping is not None:
+            message = "\n".join(f"{key}={str(value)}" for key, value in mapping.items())
         else:
             message = "\n".join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
         return self.redis_obj.publish(self.redis_setchan, message), message
@@ -76,9 +78,11 @@ class HashpipeKeyValues(KeyValues):
         return HashpipeKeyValues(m.group(1), m.group(2), redis_obj)
 
     @staticmethod
-    def broadcast(redis_obj, keys: str or list, values):
+    def broadcast(redis_obj, keys: str or list=None, values=None, mapping=None):
         if isinstance(keys, str):
             message = f"{keys}={str(values)}"
+        elif mapping is not None:
+            message = "\n".join(f"{key}={str(value)}" for key, value in mapping.items())
         else:
             message = "\n".join(f"{key}={str(values[i])}" for i, key in enumerate(keys))
         return redis_obj.publish(HashpipeKeyValues.BROADCASTGW, message)
