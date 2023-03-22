@@ -66,6 +66,7 @@ class HashpipeKeyValues(KeyValues):
         ipaddress: str,
         redis_obj,
         hostname_regex: str = r"(?P<hostname>.+)-\d+g-(?P<instance_id>.+)",
+        hostname_match_callback=lambda m: (m.group(1), m.group(2)),
         dns=None,
     ):
         if dns is not None and ipaddress in dns:
@@ -75,10 +76,10 @@ class HashpipeKeyValues(KeyValues):
 
         m = re.match(hostname_regex, hostname)
         assert m is not None, f"'{hostname}' does not match r`{hostname_regex}`"
-        return HashpipeKeyValues(m.group(1), m.group(2), redis_obj)
+        return HashpipeKeyValues(*hostname_match_callback(m), redis_obj)
 
     @staticmethod
-    def broadcast(redis_obj, keys: str or list=None, values=None, mapping=None):
+    def broadcast(redis_obj, keys: str or list = None, values=None, mapping=None):
         if isinstance(keys, str):
             message = f"{keys}={str(values)}"
         elif mapping is not None:

@@ -32,7 +32,7 @@ class PypelineKeyValues(KeyValues):
     def __hash__(self):
         return hash(str(self))
 
-    def get(self, keys: list or str=None, fallback=None):
+    def get(self, keys: list or str = None, fallback=None):
         if isinstance(keys, str):
             val = self.redis_obj.hget(self.redis_hash, keys)
             return HashpipeKeyValues._decode_value(val, fallback=fallback)
@@ -44,12 +44,12 @@ class PypelineKeyValues(KeyValues):
                 if keys is None or key in keys
             }
 
-    def set(self, keys: str or list=None, values=None, mapping=None):
+    def set(self, keys: str or list = None, values=None, mapping=None):
         if isinstance(keys, str):
             return self.redis_obj.hset(self.redis_hash, keys, values)
         else:
             if mapping is None:
-                mapping=dict(zip(keys, values))
+                mapping = dict(zip(keys, values))
             return self.redis_obj.hset(self.redis_hash, mapping=mapping)
 
     @staticmethod
@@ -57,6 +57,7 @@ class PypelineKeyValues(KeyValues):
         ipaddress: str,
         redis_obj,
         hostname_regex: str = r"(?P<hostname>.+)-\d+g-(?P<instance_id>.+)",
+        hostname_match_callback=lambda m: (m.group(1), m.group(2)),
         dns=None,
     ):
         if dns is not None and ipaddress in dns:
@@ -66,7 +67,7 @@ class PypelineKeyValues(KeyValues):
 
         m = re.match(hostname_regex, hostname)
         assert m is not None, f"'{hostname}' does not match r`{hostname_regex}`"
-        return PypelineKeyValues(m.group(1), m.group(2), redis_obj)
+        return PypelineKeyValues(*hostname_match_callback(m), redis_obj)
 
     @staticmethod
     def of(hashpipekv: HashpipeKeyValues):
@@ -75,7 +76,7 @@ class PypelineKeyValues(KeyValues):
         )
 
     @staticmethod
-    def broadcast(redis_obj, keys: str or list=None, values=None, mapping=None):
+    def broadcast(redis_obj, keys: str or list = None, values=None, mapping=None):
         if isinstance(keys, str):
             message = f"{keys}={str(values)}"
         elif mapping is not None:
