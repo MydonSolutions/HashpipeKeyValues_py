@@ -59,7 +59,7 @@ class HashpipeKeyValues(KeyValues):
     @staticmethod
     def from_string(hpt_str: str, redis_obj):
         sepindex = hpt_str.rindex(".")
-        return HashpipeKeyvalues(hpt_str[:sepindex], hpt_str[sepindex + 1 :], redis_obj)
+        return HashpipeKeyValues(hpt_str[:sepindex], hpt_str[sepindex + 1 :], redis_obj)
 
     @staticmethod
     def instance_at(
