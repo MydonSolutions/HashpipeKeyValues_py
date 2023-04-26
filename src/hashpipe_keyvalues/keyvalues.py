@@ -1,4 +1,5 @@
 from typing import Callable
+import time
 
 
 class KeyValues(object):
@@ -16,6 +17,20 @@ class KeyValues(object):
 
     def get(self, keys: list or str = None):
         raise NotImplementedError
+
+    def get_or_error(self, keys: list or str = None, tries=1, retry_period_s=0):
+        attempt_no = 0
+        while True:
+            value = self.get(keys, fallback=None)
+            attempt_no += 1
+            if value is not None:
+                return value
+            if attempt_no >= tries:
+                raise RuntimeError(
+                    f"Could not get value for '{keys}' of {self} ({attempt_no} attempt{'s' if tries > 1 else ''})."
+                )
+            if retry_period_s > 0:
+                time.sleep(retry_period_s)
 
     def set(self, keys: str or list, values):
         raise NotImplementedError
