@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 
+from keyvaluestore import KeyValueProperty
+
 
 def _gather_antennaCsvEntries(key_prefix, hpkv, separator: str = ","):
     # manage limited entry length
@@ -39,39 +41,43 @@ def _generate_antennaCsvEntries(key_prefix, ant_values, separator: str = ","):
     return keyvalues
 
 
-KEYS = {
-    "blocksize": ("BLOCSIZE", None, False, None),
-    "nof_pols": ("NPOL", None, None, None),
-    "nof_bits": ("NBITS", None, None, None),
-    "nof_beams": ("NBEAM", None, None, None),
-    "nof_antennas": ("NANTS", None, None, None),
-    "nof_channels": ("NCHAN", None, None, None),
-    "observation_nof_channels": ("OBSNCHAN", None, None, None),
-    "observation_frequency": ("OBSFREQ", None, None, None),
-    "observation_bandwidth": ("OBSBW", None, None, None),
-    "channel_bandwidth": (
+PROPERTIES = [
+    KeyValueProperty("blocksize", "BLOCSIZE", None, False, None),
+    KeyValueProperty("nof_pols", "NPOL", None, None, None),
+    KeyValueProperty("nof_bits", "NBITS", None, None, None),
+    KeyValueProperty("nof_beams", "NBEAM", None, None, None),
+    KeyValueProperty("nof_antennas", "NANTS", None, None, None),
+    KeyValueProperty("nof_channels", "NCHAN", None, None, None),
+    KeyValueProperty("observation_nof_channels", "OBSNCHAN", None, None, None),
+    KeyValueProperty("observation_frequency", "OBSFREQ", None, None, None),
+    KeyValueProperty("observation_bandwidth", "OBSBW", None, None, None),
+    KeyValueProperty(
+        "channel_bandwidth",
         "CHAN_BW",
         None,
         lambda self, value: self.set(["CHAN_BW", "TBIN"], [value, 1.0 / value]),
         None,
     ),
-    "source": ("SRC_NAME", None, None, None),
-    "telescope": ("TELESCOP", None, None, None),
-    "data_directory": ("DATADIR", None, False, None),
-    "project_id": (
+    KeyValueProperty("source", "SRC_NAME", None, None, None),
+    KeyValueProperty("telescope", "TELESCOP", None, None, None),
+    KeyValueProperty("data_directory", "DATADIR", None, False, None),
+    KeyValueProperty(
+        "project_id",
         "PROJID",
         lambda self: self.get("PROJID", ".")[0:23],
         None,
         None,
     ),
-    "backend": (
+    KeyValueProperty(
+        "backend",
         "BACKEND",
         lambda self: self.get("BACKEND", ".")[0:23],
         None,
         None,
     ),
-    "observation_stem": ("OBSSTEM", None, False, None),
-    "observation_stempath": (
+    KeyValueProperty("observation_stem", "OBSSTEM", None, False, None),
+    KeyValueProperty(
+        "observation_stempath",
         None,
         lambda self: [
             self.data_directory,
@@ -82,22 +88,24 @@ KEYS = {
         False,
         None,
     ),
-    "channel_timespan": (
+    KeyValueProperty(
+        "channel_timespan",
         "TBIN",
         None,
         lambda self, value: self.set(["TBIN", "CHAN_BW"], [value, 1.0 / value]),
         None,
     ),
-    "directio": ("DIRECTIO", None, None, None),
-    "packet_index": ("PKTIDX", None, None, None),
-    "beam_id": ("BEAM_ID", None, None, None),
-    "sample_datatype": ("DATATYPE", None, None, None),
-    "rightascension_string": ("RA_STR", None, None, None),
-    "declination_string": ("DEC_STR", None, None, None),
-    "stt_mjd_day": ("STT_IMJD", None, None, None),
-    "stt_mjd_seconds": ("STT_SMJD", None, None, None),
-    "observation_id": ("OBSID", None, None, None),
-    "antenna_names": (
+    KeyValueProperty("directio", "DIRECTIO", None, None, None),
+    KeyValueProperty("packet_index", "PKTIDX", None, None, None),
+    KeyValueProperty("beam_id", "BEAM_ID", None, None, None),
+    KeyValueProperty("sample_datatype", "DATATYPE", None, None, None),
+    KeyValueProperty("rightascension_string", "RA_STR", None, None, None),
+    KeyValueProperty("declination_string", "DEC_STR", None, None, None),
+    KeyValueProperty("stt_mjd_day", "STT_IMJD", None, None, None),
+    KeyValueProperty("stt_mjd_seconds", "STT_SMJD", None, None, None),
+    KeyValueProperty("observation_id", "OBSID", None, None, None),
+    KeyValueProperty(
+        "antenna_names",
         None,
         lambda self: _gather_antennaCsvEntries("ANTNMS", self),
         lambda self, value: self.set(
@@ -105,7 +113,8 @@ KEYS = {
         ),
         None,
     ),
-    "antenna_flags": (
+    KeyValueProperty(
+        "antenna_flags",
         None,
         lambda self: _gather_antennaCsvEntries("ANTFLG", self),
         lambda self, value: self.set(
@@ -113,7 +122,8 @@ KEYS = {
         ),
         None,
     ),
-    "pulse": (
+    KeyValueProperty(
+        "pulse",
         "DAQPULSE",
         lambda self: datetime.strptime(
             self.get("DAQPULSE", "Thu Jan 01 00:00:00 1970"), "%a %b %d %H:%M:%S %Y"
@@ -121,10 +131,11 @@ KEYS = {
         False,
         None,
     ),
-    "is_alive": (
+    KeyValueProperty(
+        "is_alive",
         "DAQPULSE",
         lambda self: abs(datetime.now() - self.pulse) < timedelta(seconds=3),
         False,
         None,
     ),
-}
+]
