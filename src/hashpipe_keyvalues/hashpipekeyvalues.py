@@ -2,11 +2,11 @@ from string import Template
 import socket
 import re
 
-from .keyvalues import KeyValues
+from keyvaluestore import KeyValueStore
 from .hashpipekeyvaluescache import HashpipeKeyValuesCache
 
 
-class HashpipeKeyValues(KeyValues):
+class HashpipeKeyValues(KeyValueStore):
     """
     This class encapsulates the logic related to accessing
     standard key-values in Hashpipe"s status-buffer.

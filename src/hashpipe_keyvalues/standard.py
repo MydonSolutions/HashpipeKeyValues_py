@@ -1,5 +1,5 @@
-from .keyvalues import KeyValues_defineKeys
+from keyvaluestore import KeyValueStore
 from .hashpipekeyvalues import HashpipeKeyValues
-from .kvpsets.standard import KEYS as STANDARD_KEYS
+from .kvpsets.standard import PROPERTIES as STANDARD_PROPERTIES
 
-KeyValues_defineKeys(HashpipeKeyValues, STANDARD_KEYS)
+KeyValueStore.add_properties(HashpipeKeyValues, STANDARD_PROPERTIES)

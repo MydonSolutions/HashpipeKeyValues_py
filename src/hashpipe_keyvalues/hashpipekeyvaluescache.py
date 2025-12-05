@@ -1,7 +1,7 @@
-from .keyvalues import KeyValues
+from keyvaluestore import KeyValueStore
 
 
-class HashpipeKeyValuesCache(KeyValues):
+class HashpipeKeyValuesCache(KeyValueStore):
     """
     This class encapsulates the logic related to accessing
     standard key-values in a dictionary snapshot of a Hashpipe's status-buffer.

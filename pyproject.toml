@@ -1,3 +1,19 @@
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "hashpipe_keyvalues"
+version = "0.2.17"
+description = "Python Library of supporting code for hashpipe_keyvalues, in particular accessing, setting distributing them via the redis-gateway for an instance of hashpipe."
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.7"
+dependencies = [
+  "redis",
+  "keyvaluestore @ git+https://github.com/MydonSolutions/keyvaluestore",
+]

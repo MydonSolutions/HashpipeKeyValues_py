@@ -4,11 +4,11 @@ import json
 import re
 from datetime import datetime, timedelta
 
-from .keyvalues import KeyValues, KeyValues_defineKeys
+from keyvaluestore import KeyValueStore, KeyValueProperty
 from .hashpipekeyvalues import HashpipeKeyValues
 
 
-class PypelineKeyValues(KeyValues):
+class PypelineKeyValues(KeyValueStore):
     """
     This class encapsulates the logic related to accessing
     standard key-values in the status-buffer of a pypeline.
@@ -119,22 +119,25 @@ def _get_process_states(processes_string_value):
     return processes_state_timestamp_dict
 
 
-KeyValues_defineKeys(
+KeyValueStore.add_properties(
     PypelineKeyValues,
-    {
-        "context": (
+    [
+        KeyValueProperty(
+            "context",
             "#CONTEXT",
             None,
             None,
             None,
         ),
-        "stages": (
+        KeyValueProperty(
+            "stages",
             "#STAGES",
             None,
             lambda self, stages: self.set("#STAGES", " ".join(stages)),
             None,
         ),
-        "pulse": (
+        KeyValueProperty(
+            "pulse",
             "PULSE",
             lambda self: datetime.strptime(
                 self.get("PULSE", "1970/01/01 00:00:00"), "%Y/%m/%d %H:%M:%S"
@@ -142,29 +145,33 @@ KeyValues_defineKeys(
             False,
             None,
         ),
-        "status": (
+        KeyValueProperty(
+            "status",
             "STATUS",
             None,
             False,
             None,
         ),
-        "is_idle": (
+        KeyValueProperty(
+            "is_idle",
             "STATUS",
             lambda self: self.status.startswith("0"),
             False,
             None,
         ),
-        "is_alive": (
+        KeyValueProperty(
+            "is_alive",
             "PULSE",
             lambda self: abs(datetime.now() - self.pulse) < timedelta(seconds=1.5),
             False,
             None,
         ),
-        "process_states": (
+        KeyValueProperty(
+            "process_states",
             "PROCESSES",
             lambda self: _get_process_states(self.get("PROCESSES", "{}")),
             False,
             None,
         ),
-    },
+    ],
 )
